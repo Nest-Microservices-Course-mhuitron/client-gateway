@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Inject, ParseUUIDPipe, Query } from '@nestjs/common';
-import { ORDER_SERVICE } from 'src/config';
+import { NATS_SERVICE } from 'src/config';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { CreateOrderDto, OrderPaginationDto, StatusDto } from './dto';
@@ -9,13 +9,13 @@ import { PaginationDto } from 'src/common';
 export class OrdersController {
   
   constructor(
-    @Inject(ORDER_SERVICE) 
-    private readonly ordersClient: ClientProxy
+    @Inject(NATS_SERVICE) 
+    private readonly client: ClientProxy
   ) {}
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersClient.send('createOrder', createOrderDto)
+    return this.client.send('createOrder', createOrderDto)
       .pipe(
         catchError(err => {throw new RpcException(err)})
       );
@@ -23,7 +23,7 @@ export class OrdersController {
 
   @Get()
   findAll(@Query() orderPaginationDto: OrderPaginationDto) {
-    return this.ordersClient.send('findAllOrders', orderPaginationDto)
+    return this.client.send('findAllOrders', orderPaginationDto)
     .pipe(
       catchError(err => {throw new RpcException(err)})
     );
@@ -31,7 +31,7 @@ export class OrdersController {
 
   @Get(':status')
   findAllByStatus(@Param() statusDto: StatusDto, @Query() paginationDto: PaginationDto) {
-    return this.ordersClient.send('findAllOrders', {...paginationDto, status: statusDto.status})
+    return this.client.send('findAllOrders', {...paginationDto, status: statusDto.status})
     .pipe(
       catchError(err => {throw new RpcException(err)})
     );
@@ -39,7 +39,7 @@ export class OrdersController {
 
   @Get('id/:id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.ordersClient.send('findOneOrder', { id })
+    return this.client.send('findOneOrder', { id })
     .pipe(
       catchError(err => {throw new RpcException(err)})
     );
@@ -47,7 +47,7 @@ export class OrdersController {
 
   @Patch(':id')
   changeOrderStatus(@Param('id', ParseUUIDPipe) id: string, @Body() statusDto: StatusDto) {
-    return this.ordersClient.send('changeOrderStatus', {id, status: statusDto.status})
+    return this.client.send('changeOrderStatus', {id, status: statusDto.status})
     .pipe(
       catchError(err => {throw new RpcException(err)})
     );
